@@ -1,0 +1,71 @@
+%option yylineno
+%pointer
+
+%{
+    #include <stdlib.h>
+    #include <errno.h>
+    #include <limits.h>
+    #include "ast.hpp"
+    #include "parser.hpp"
+    void yyerror(const char *);
+%}
+
+/* WRITEME: Copy any definitions and start conditions from Project 3 here */
+%x comment
+
+%%
+<INITIAL>{
+"/*"                 BEGIN(comment);
+}
+<comment>{
+ "*/"                BEGIN(INITIAL);
+ "*"                 
+ [^*]+               
+ <<EOF>>             { yyerror("dangling comment"); }
+}
+
+"+"                  {return T_PLUS;}
+"-"                  {return T_MINUS;}
+"--"                 {return T_UNARYMINUS;}
+"*"                  {return T_MULTIPLY;}
+"/"                  {return T_DIVIDE;}
+">"                  {return T_GREATER;}
+">="                 {return T_GREATEROREQUAL;}
+"="                  {return T_EQUAL;}
+"."                  {return T_DOT;}
+";"                  {return T_SEMICOLON;}
+"("                  {return T_OPENPAREN;}
+")"                  {return T_CLOSEPAREN;}
+"{"                  {return T_OPENBRACE;}
+"}"                  {return T_CLOSEBRACE;}
+","                  {return T_COMMA;}
+"->"                 {return T_ARROW;}
+"extends"            {return T_EXTENDS;}
+"return"             {return T_RETURN;}
+"if"                 {return T_IF;}
+"else"               {return T_ELSE;}
+"do"                 {return T_DO;}
+"while"              {return T_WHILE;}
+"print"              {return T_PRINT;}
+"equals"             {return T_EQUALS;}
+"and"                {return T_AND;}
+"or"                 {return T_OR;}
+"not"                {return T_NOT;}
+"new"                {return T_NEW;}
+"integer"            {return T_INTEGER;}
+"boolean"            {return T_BOOLEAN;}
+"none"               {return T_NONE;}
+"true"               {yylval.base_int = 1; return T_TRUE;}
+"false"              {yylval.base_int = 0; return T_FALSE;}
+
+[0]|[1-9][0-9]*      {yylval.base_int = atoi(yytext); return T_NUMBER;}
+[a-zA-z][a-zA-Z0-9]* {yylval.base_char_ptr = strdup(yytext); return T_IDENTIFIER;}
+[ \t]                ;
+[\n]                 ;
+.                    { yyerror("invalid character"); }
+
+%%
+
+int yywrap(void) {
+  return 1;
+}
