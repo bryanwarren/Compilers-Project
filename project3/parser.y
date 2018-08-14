@@ -1,0 +1,212 @@
+%{
+    #include <cstdlib>
+    #include <cstdio>
+    #include <iostream>
+
+    #define YYDEBUG 1
+
+    int yylex(void);
+    void yyerror(const char *);
+%}
+
+%error-verbose
+
+/* WRITEME: List all your tokens here */
+%token T_OPENPAREN
+%token T_PLUS
+%token T_MINUS
+%token T_UNARYMINUS
+%token T_MULTIPLY
+%token T_DIVIDE
+%token T_GREATER
+%token T_GREATEROREQUAL
+%token T_EQUAL
+%token T_DOT
+%token T_COLON
+%token T_SEMICOLON
+%token T_CLOSEPAREN
+%token T_OPENBRACE
+%token T_CLOSEBRACE
+%token T_COMMA
+%token T_ARROW
+%token T_EXTENDS
+%token T_RETURN
+%token T_IF
+%token T_ELSE
+%token T_DO
+%token T_WHILE
+%token T_PRINT
+%token T_EQUALS
+%token T_AND
+%token T_OR
+%token T_NOT
+%token T_NEW
+%token T_INTEGER
+%token T_BOOLEAN
+%token T_NONE
+%token T_TRUE
+%token T_FALSE
+%token T_NUMBER
+%token T_IDENTIFIER
+
+/* WRITEME: Specify precedence here */
+%left T_OR
+%left T_AND
+%left T_GREATER T_GREATEROREQUAL T_EQUALS
+%left T_PLUS T_MINUS
+%left T_MULTIPLY T_DIVIDE
+%precedence T_NOT T_UNARYMINUS
+
+%type <class_list_ptr> Classes
+%type <class_ptr> Class
+%type <declaration_list_ptr> Members
+
+%%
+
+/* WRITEME: This rule is a placeholder, since Bison requires
+            at least one rule to run successfully. Replace
+            this with your appropriate start rules. */
+Classes : Classes Class
+	| %empty
+	;
+
+Class   : T_IDENTIFIER Cext T_OPENBRACE Members T_CLOSEBRACE
+	;
+
+Cext    : T_EXTENDS T_IDENTIFIER
+	| %empty
+	;
+
+Members : Members Member
+        | %empty
+        ;
+
+Member  : Ident Member2
+        ;
+
+Member2 : T_IDENTIFIER T_SEMICOLON
+        | T_OPENPAREN Param T_CLOSEPAREN T_ARROW RIdent T_OPENBRACE Mbody T_CLOSEBRACE
+        ;
+
+Param   : Ident T_IDENTIFIER Param2
+        | %empty
+        ;
+
+Param2  : T_COMMA Ident T_IDENTIFIER Param2
+        | %empty
+        ;
+
+Mbody : DeclareStates Return
+      ;
+
+DeclareStates: DeclareStates DeclareState
+             | %empty
+             ;
+
+DeclareStatesIfLoops : DeclareStates DeclareState
+                     ;
+
+DeclareState: T_IDENTIFIER DeclareState2
+            | Ident2 DeclareState1
+            | Ifelse 
+            | Whileloop
+            | Dowhile
+            | Print
+            ;
+
+DeclareState1 : T_IDENTIFIER DeclareState3
+              ;
+
+DeclareState2 : T_IDENTIFIER DeclareState3 
+              | T_EQUAL Expression T_SEMICOLON
+              | T_DOT DeclareState4
+              | T_OPENPAREN Arguments T_CLOSEPAREN T_SEMICOLON
+              ;
+
+DeclareState3 : T_SEMICOLON
+              | T_COMMA T_IDENTIFIER DeclareState3
+              ;
+
+DeclareState4 : T_IDENTIFIER DeclareState5
+              ;
+
+DeclareState5 : T_OPENPAREN Arguments T_CLOSEPAREN T_SEMICOLON
+              | T_EQUAL Expression T_SEMICOLON
+              ; 
+
+MethodCall : T_IDENTIFIER T_OPENPAREN Arguments T_CLOSEPAREN 
+           | T_IDENTIFIER T_DOT T_IDENTIFIER T_OPENPAREN Arguments T_CLOSEPAREN 
+           ;
+
+
+Arguments : Arguments2
+          | %empty
+          ;
+
+Arguments2 : Arguments2 T_COMMA Expression
+          | Expression
+          ;
+
+Ifelse : T_IF Expression T_OPENBRACE DeclareStatesIfLoops  T_CLOSEBRACE
+       | T_IF Expression T_OPENBRACE DeclareStatesIfLoops  T_CLOSEBRACE T_ELSE  T_OPENBRACE DeclareStatesIfLoops  T_CLOSEBRACE
+       ;
+
+Whileloop : T_WHILE Expression T_OPENBRACE DeclareStatesIfLoops T_CLOSEBRACE
+          ;
+
+Dowhile : T_DO T_OPENBRACE DeclareStatesIfLoops T_CLOSEBRACE T_WHILE Expression T_SEMICOLON
+        ;
+
+Print : T_PRINT Expression T_SEMICOLON
+      ;
+
+Expression : Expression T_PLUS Expression
+	   | Expression T_MINUS Expression
+	   | Expression T_MULTIPLY Expression
+	   | Expression T_DIVIDE Expression
+	   | Expression T_GREATER Expression
+           | Expression T_GREATEROREQUAL Expression
+ 	   | Expression T_EQUALS Expression
+	   | Expression T_AND Expression
+	   | Expression T_OR Expression
+	   | T_NOT Expression
+	   | T_MINUS Expression %prec T_UNARYMINUS
+	   | T_IDENTIFIER
+           | T_IDENTIFIER T_DOT T_IDENTIFIER
+           | MethodCall
+	   | T_OPENPAREN Expression T_CLOSEPAREN
+	   | T_NUMBER
+           | T_TRUE
+           | T_FALSE
+           | T_NEW T_IDENTIFIER
+           | T_NEW T_IDENTIFIER T_OPENPAREN Arguments T_CLOSEPAREN
+           ;
+
+Return  : T_RETURN Expression T_SEMICOLON
+        | %empty
+        ;
+
+Ident   : T_INTEGER
+        | T_BOOLEAN
+        | T_IDENTIFIER
+        ;
+
+Ident2  : T_INTEGER
+        | T_BOOLEAN
+        ;
+
+RIdent  : Ident
+        | T_NONE
+        ;
+
+
+/* WRITME: Write your Bison grammar specification here */
+
+%%
+
+extern int yylineno;
+
+void yyerror(const char *s) {
+  fprintf(stderr, "%s at line %d\n", s, yylineno);
+  exit(1);
+}

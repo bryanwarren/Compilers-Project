@@ -1,0 +1,16 @@
+Name: Bryan Warren
+Perm: 8355695
+Email: bryanwarren@umail.ucsb.edu
+Explanations: I used function parameters and return values to implement my parser. The LL(1) grammar I came up with is:
+S -> E
+E -> FE'
+E' -> ; FE'| Epsilon
+F -> GF'
+F' -> + GF' | - GF' | Epsilon
+G -> HG'
+G' -> * HG' | / HG' | mod HG' | Epsilon 
+H -> ( H ) | num
+
+I added a string call output that holds the evaluated expressions and only prints when evalue=true.
+
+Issues: Not really a big issue but the Follow set for H() was causing errors in the parser tests so I commented them out and everything works fine. Just an odd thing that happened. 
